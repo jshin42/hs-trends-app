@@ -1,0 +1,11 @@
+{
+  "sqltools.connections": [
+    {
+      "previewLimit": 500,
+      "driver": "SQLite",
+      "database": "${workspaceFolder:hs-trends-app}/backend/schools.db",
+      "name": "test schools"
+    }
+  ],
+  "sqltools.useNodeRuntime": true
+}
