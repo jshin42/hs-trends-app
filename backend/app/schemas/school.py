@@ -1,5 +1,5 @@
 from pydantic import BaseModel, validator
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 import logging
 
@@ -61,6 +61,11 @@ class School(SchoolBase):
 class SchoolBasic(BaseModel):
     id: str
     name: str
+    city: Optional[str]
+    state: Optional[str]
+
+    class Config:
+        from_attributes = True
 
 
 class SchoolRanking(BaseModel):
@@ -69,6 +74,12 @@ class SchoolRanking(BaseModel):
     math_proficiency: Optional[str]
     reading_proficiency: Optional[str]
     student_teacher_ratio: Optional[str]
+    college_readiness: Optional[str]
+    college_readiness_index: Optional[str]
+    grades: Optional[str]
+    teachers: Optional[str]
+    students: Optional[str]
+    medal_awarded: Optional[str]
 
     @validator("year", pre=True)
     def parse_year(cls, value):
@@ -93,6 +104,14 @@ class SchoolRanking(BaseModel):
                 logger.error(f"Invalid rank format: {value}")
                 raise ValueError(f"Invalid rank format: {value}")
         return value
+
+    class Config:
+        from_attributes = True
+
+
+class SchoolOverview(BaseModel):
+    school: School
+    rankings: List[SchoolRanking]
 
     class Config:
         from_attributes = True

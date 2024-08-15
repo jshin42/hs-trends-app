@@ -10,6 +10,9 @@ import {
   TableRow,
   TableSortLabel,
   TextField,
+  Box,
+  Chip,
+  CircularProgress,
 } from "@mui/material";
 import {
   LineChart,
@@ -19,6 +22,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  Legend,
 } from "recharts";
 import SearchableDropdown from "./SearchableDropdown";
 
@@ -36,15 +40,20 @@ const SchoolGraph = ({ apiUrl }) => {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch(`${apiUrl}/schools/${schoolId}/rankings`);
-        if (!response.ok) {
-          if (response.status === 404) {
-            throw new Error("No ranking data available for this school");
-          }
+        const [schoolResponse, rankingsResponse] = await Promise.all([
+          fetch(`${apiUrl}/schools/${schoolId}`),
+          fetch(`${apiUrl}/schools/${schoolId}/rankings`),
+        ]);
+
+        if (!schoolResponse.ok || !rankingsResponse.ok) {
           throw new Error("Failed to fetch school data");
         }
-        const data = await response.json();
-        setSchoolData(data.sort((a, b) => a.year - b.year));
+
+        const schoolDetails = await schoolResponse.json();
+        const rankings = await rankingsResponse.json();
+
+        setSelectedSchool(schoolDetails);
+        setSchoolData(rankings.sort((a, b) => a.year - b.year));
       } catch (error) {
         console.error("Error fetching school data:", error);
         setError(error.message);
@@ -53,7 +62,7 @@ const SchoolGraph = ({ apiUrl }) => {
         setLoading(false);
       }
     },
-    [apiUrl]
+    [apiUrl],
   );
 
   const handleSchoolSelect = useCallback(
@@ -61,7 +70,7 @@ const SchoolGraph = ({ apiUrl }) => {
       setSelectedSchool(school);
       fetchSchoolData(school.id);
     },
-    [fetchSchoolData]
+    [fetchSchoolData],
   );
 
   const handleRequestSort = (property) => {
@@ -86,8 +95,8 @@ const SchoolGraph = ({ apiUrl }) => {
   const filteredData = useMemo(() => {
     return sortedData.filter((row) =>
       Object.values(row).some((value) =>
-        value.toString().toLowerCase().includes(filterText.toLowerCase())
-      )
+        value?.toString().toLowerCase().includes(filterText.toLowerCase()),
+      ),
     );
   }, [sortedData, filterText]);
 
@@ -96,33 +105,96 @@ const SchoolGraph = ({ apiUrl }) => {
     return Array.from({ length: currentYear - 2011 }, (_, i) => 2012 + i);
   }, []);
 
+  const tableHeaders = [
+    "year",
+    "national_rank",
+    "math_proficiency",
+    "reading_proficiency",
+    "student_teacher_ratio",
+    "college_readiness",
+    "college_readiness_index",
+    "grades",
+    "teachers",
+    "students",
+    "medal_awarded",
+  ];
+
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <Paper elevation={3} sx={{ padding: 2, backgroundColor: "white" }}>
+          <Typography variant="body2">Year: {label}</Typography>
+          {payload.map((entry) => (
+            <Typography key={entry.name} variant="body2" color={entry.color}>
+              {entry.name}: {entry.value}
+            </Typography>
+          ))}
+        </Paper>
+      );
+    }
+    return null;
+  };
+
   return (
-    <Paper elevation={3} sx={{ padding: 3, marginBottom: 3 }}>
-      <Typography variant="h4" gutterBottom>
+    <Paper
+      elevation={3}
+      sx={{
+        padding: 4,
+        marginBottom: 4,
+        borderRadius: "8px",
+        backgroundColor: "#f7f7f7",
+      }}
+    >
+      <Typography variant="h4" gutterBottom sx={{ color: "#0074E4" }}>
         School National Rank Comparison
       </Typography>
       <SearchableDropdown apiUrl={apiUrl} onSchoolSelect={handleSchoolSelect} />
-      {loading && <Typography>Loading...</Typography>}
+      {loading && <CircularProgress sx={{ marginTop: 2 }} />}
       {error && <Typography color="error">{error}</Typography>}
       {selectedSchool && schoolData.length > 0 && (
         <>
+          <Box sx={{ marginTop: 4, marginBottom: 4 }}>
+            <Typography variant="h5" gutterBottom>
+              {selectedSchool.name}
+            </Typography>
+            <Chip
+              label={`${selectedSchool.city}, ${selectedSchool.state}`}
+              sx={{ marginRight: 1 }}
+            />
+            <Chip
+              label={selectedSchool.district}
+              color="primary"
+              sx={{ marginRight: 1 }}
+            />
+            <Chip
+              label={`Grades: ${selectedSchool.grades}`}
+              color="secondary"
+            />
+          </Box>
           <div style={{ width: "100%", height: 400, marginTop: 20 }}>
             <ResponsiveContainer>
               <LineChart data={schoolData}>
-                <CartesianGrid strokeDasharray="3 3" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
                 <XAxis
                   dataKey="year"
-                  domain={[2012, 2024]}
                   type="number"
+                  domain={["dataMin", "dataMax"]}
                   tickCount={13}
+                  tick={{ fontSize: 12, fill: "#666" }}
                 />
-                <YAxis reversed domain={["dataMin", "dataMax"]} />
-                <Tooltip />
+                <YAxis
+                  reversed
+                  domain={["dataMin", "dataMax"]}
+                  tick={{ fontSize: 12, fill: "#666" }}
+                />
+                <Tooltip content={<CustomTooltip />} />
+                <Legend />
                 <Line
                   type="monotone"
                   dataKey="national_rank"
                   name="National Rank"
-                  stroke="#8884d8"
+                  stroke="#0074E4"
+                  strokeWidth={2}
                   activeDot={{ r: 8 }}
                 />
               </LineChart>
@@ -135,19 +207,51 @@ const SchoolGraph = ({ apiUrl }) => {
             variant="outlined"
             value={filterText}
             onChange={(e) => setFilterText(e.target.value)}
+            sx={{
+              backgroundColor: "white",
+              borderRadius: "8px",
+              "& .MuiOutlinedInput-root": {
+                "& fieldset": {
+                  borderColor: "#ccc",
+                },
+                "&:hover fieldset": {
+                  borderColor: "#0074E4",
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: "#0074E4",
+                },
+              },
+            }}
           />
           <TableContainer component={Paper} sx={{ marginTop: 3 }}>
-            <Table aria-label="school data table">
+            <Table
+              aria-label="school data table"
+              sx={{
+                "& .MuiTableCell-root": {
+                  padding: "16px",
+                  borderBottom: "1px solid #e0e0e0",
+                },
+                "& .MuiTableHead-root": {
+                  backgroundColor: "#f5f5f5",
+                },
+                "& .MuiTableSortLabel-root": {
+                  color: "#0074E4",
+                  "&.Mui-active": {
+                    color: "#0059B2",
+                  },
+                },
+              }}
+            >
               <TableHead>
                 <TableRow>
-                  {[
-                    "year",
-                    "national_rank",
-                    "math_proficiency",
-                    "reading_proficiency",
-                    "student_teacher_ratio",
-                  ].map((headCell) => (
-                    <TableCell key={headCell}>
+                  {tableHeaders.map((headCell) => (
+                    <TableCell
+                      key={headCell}
+                      sx={{
+                        fontWeight: "bold",
+                        color: "#333",
+                      }}
+                    >
                       <TableSortLabel
                         active={orderBy === headCell}
                         direction={orderBy === headCell ? order : "asc"}
@@ -161,12 +265,12 @@ const SchoolGraph = ({ apiUrl }) => {
               </TableHead>
               <TableBody>
                 {filteredData.map((row) => (
-                  <TableRow key={row.year}>
-                    <TableCell>{row.year}</TableCell>
-                    <TableCell>{row.national_rank}</TableCell>
-                    <TableCell>{row.math_proficiency}</TableCell>
-                    <TableCell>{row.reading_proficiency}</TableCell>
-                    <TableCell>{row.student_teacher_ratio}</TableCell>
+                  <TableRow key={row.year} hover>
+                    {tableHeaders.map((header) => (
+                      <TableCell key={`${row.year}-${header}`}>
+                        {row[header]}
+                      </TableCell>
+                    ))}
                   </TableRow>
                 ))}
               </TableBody>

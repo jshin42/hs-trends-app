@@ -1,4 +1,5 @@
 import React from "react";
+import "./App.css";
 import SchoolGraph from "./components/SchoolGraph";
 
 function App() {

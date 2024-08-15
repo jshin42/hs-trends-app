@@ -12,7 +12,7 @@ const SearchableDropdown = ({ apiUrl, onSchoolSelect }) => {
       setLoading(true);
       try {
         const response = await fetch(
-          `${apiUrl}/schools/search?name=${encodeURIComponent(searchTerm)}`
+          `${apiUrl}/schools/search?name=${encodeURIComponent(searchTerm)}`,
         );
         if (!response.ok) throw new Error("Failed to fetch school options");
         const data = await response.json();
@@ -24,12 +24,12 @@ const SearchableDropdown = ({ apiUrl, onSchoolSelect }) => {
         setLoading(false);
       }
     },
-    [apiUrl]
+    [apiUrl],
   );
 
   const debouncedFetchSchoolOptions = useCallback(
     debounce(fetchSchoolOptions, 300),
-    [fetchSchoolOptions]
+    [fetchSchoolOptions],
   );
 
   useEffect(() => {
@@ -43,7 +43,13 @@ const SearchableDropdown = ({ apiUrl, onSchoolSelect }) => {
   return (
     <Autocomplete
       options={options}
-      getOptionLabel={(option) => option.name}
+      getOptionLabel={(option) =>
+        `${option.name}${
+          option.city && option.state
+            ? ` - ${option.city}, ${option.state}`
+            : ""
+        }`
+      }
       loading={loading}
       onInputChange={(event, newInputValue) => {
         setInputValue(newInputValue);
@@ -70,6 +76,18 @@ const SearchableDropdown = ({ apiUrl, onSchoolSelect }) => {
             ),
           }}
         />
+      )}
+      renderOption={(props, option) => (
+        <li {...props}>
+          <div>
+            <div>{option.name}</div>
+            {option.city && option.state && (
+              <div style={{ fontSize: "0.8em", color: "#666" }}>
+                {option.city}, {option.state}
+              </div>
+            )}
+          </div>
+        </li>
       )}
     />
   );
