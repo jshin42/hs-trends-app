@@ -10,7 +10,7 @@ export const fetchSchoolData = async (schoolId) => {
 
 export const searchSchools = async (query) => {
   const response = await fetch(
-    `${API_URL}/schools/search?name=${encodeURIComponent(query)}`,
+    `${API_URL}/schools/search?name=${encodeURIComponent(query)}`
   );
   if (!response.ok) {
     throw new Error("Failed to search schools");

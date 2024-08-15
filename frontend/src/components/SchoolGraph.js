@@ -62,7 +62,7 @@ const SchoolGraph = ({ apiUrl }) => {
         setLoading(false);
       }
     },
-    [apiUrl],
+    [apiUrl]
   );
 
   const handleSchoolSelect = useCallback(
@@ -70,7 +70,7 @@ const SchoolGraph = ({ apiUrl }) => {
       setSelectedSchool(school);
       fetchSchoolData(school.id);
     },
-    [fetchSchoolData],
+    [fetchSchoolData]
   );
 
   const handleRequestSort = (property) => {
@@ -95,8 +95,8 @@ const SchoolGraph = ({ apiUrl }) => {
   const filteredData = useMemo(() => {
     return sortedData.filter((row) =>
       Object.values(row).some((value) =>
-        value?.toString().toLowerCase().includes(filterText.toLowerCase()),
-      ),
+        value?.toString().toLowerCase().includes(filterText.toLowerCase())
+      )
     );
   }, [sortedData, filterText]);
 

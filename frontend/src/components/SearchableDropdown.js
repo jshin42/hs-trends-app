@@ -12,7 +12,7 @@ const SearchableDropdown = ({ apiUrl, onSchoolSelect }) => {
       setLoading(true);
       try {
         const response = await fetch(
-          `${apiUrl}/schools/search?name=${encodeURIComponent(searchTerm)}`,
+          `${apiUrl}/schools/search?name=${encodeURIComponent(searchTerm)}`
         );
         if (!response.ok) throw new Error("Failed to fetch school options");
         const data = await response.json();
@@ -24,12 +24,12 @@ const SearchableDropdown = ({ apiUrl, onSchoolSelect }) => {
         setLoading(false);
       }
     },
-    [apiUrl],
+    [apiUrl]
   );
 
   const debouncedFetchSchoolOptions = useCallback(
     debounce(fetchSchoolOptions, 300),
-    [fetchSchoolOptions],
+    [fetchSchoolOptions]
   );
 
   useEffect(() => {
