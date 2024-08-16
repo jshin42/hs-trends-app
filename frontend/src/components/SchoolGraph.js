@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import {
   Typography,
   Paper,
@@ -25,8 +25,19 @@ import {
   Legend,
 } from "recharts";
 import SearchableDropdown from "./SearchableDropdown";
+import SchoolLocationMapCard from "./SchoolLocationMapCard";
 
-const SchoolGraph = ({ apiUrl }) => {
+const SchoolGraph = ({ apiUrl, googleMapsApiKey }) => {
+  console.log("SchoolGraph received Google Maps API Key:", googleMapsApiKey);
+  // ... rest of the component
+
+  useEffect(() => {
+    console.log(
+      "SchoolGraph useEffect - Google Maps API Key:",
+      googleMapsApiKey
+    );
+  }, [googleMapsApiKey]);
+
   const [schoolData, setSchoolData] = useState([]);
   const [selectedSchool, setSelectedSchool] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -100,11 +111,6 @@ const SchoolGraph = ({ apiUrl }) => {
     );
   }, [sortedData, filterText]);
 
-  const years = useMemo(() => {
-    const currentYear = new Date().getFullYear();
-    return Array.from({ length: currentYear - 2011 }, (_, i) => 2012 + i);
-  }, []);
-
   const tableHeaders = [
     "year",
     "national_rank",
@@ -171,6 +177,10 @@ const SchoolGraph = ({ apiUrl }) => {
               color="secondary"
             />
           </Box>
+          <SchoolLocationMapCard
+            school={selectedSchool}
+            googleMapsApiKey={googleMapsApiKey}
+          />
           <div style={{ width: "100%", height: 400, marginTop: 20 }}>
             <ResponsiveContainer>
               <LineChart data={schoolData}>
